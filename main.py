@@ -273,27 +273,20 @@ def sum_plav(number1,por1,number2,por2):
             final=zn1+'.'+por1+'.'+sub(mant1,mant2)
         return final
 
-def float_to_binary(num):
-    # Check if the number is negative
+def converting_float_to_binary(num):
     sign = 1
     if num < 0:
         sign = -1
         num = -num
-
-    # Split the number into integer and fractional parts
     integer_part = int(num)
     fractional_part = num - integer_part
-
-    # Convert the integer part to binary
     integer_binary = ""
     while integer_part > 0:
         integer_binary = str(integer_part % 2) + integer_binary
         integer_part //= 2
-
-    # Convert the fractional part to binary
     fractional_binary = ""
     while fractional_part > 0:
-        if len(fractional_binary) >= 32: # limit the number of bits to 32
+        if len(fractional_binary) >= 32:
             break
         fractional_part *= 2
         if fractional_part >= 1:
@@ -301,8 +294,6 @@ def float_to_binary(num):
             fractional_part -= 1
         else:
             fractional_binary += "0"
-
-    # Combine the binary parts with the sign and return the result
     binary_string = ""
     if sign == -1:
         binary_string += "1"
@@ -311,25 +302,16 @@ def float_to_binary(num):
     binary_string += integer_binary + "." + fractional_binary
     return binary_string
 def add_floats(num1, num2):
-    # Convert the numbers to binary
-    binary1 = float_to_binary(num1)
-    binary2 = float_to_binary(num2)
-
-    # Extract the sign, integer, and fractional parts of each number
+    binary1 = converting_float_to_binary(num1)
+    binary2 = converting_float_to_binary(num2)
     sign1, int1, frac1 = binary1[0], binary1[2:binary1.index(".")], binary1[binary1.index(".") + 1:]
     sign2, int2, frac2 = binary2[0], binary2[2:binary2.index(".")], binary2[binary2.index(".") + 1:]
-
-    # Pad the integer parts with zeros to make them the same length
     max_len = max(len(int1), len(int2))
     int1 = int1.rjust(max_len, "0")
     int2 = int2.rjust(max_len, "0")
-
-    # Pad the fractional parts with zeros to make them the same length
     max_len = max(len(frac1), len(frac2))
     frac1 = frac1.ljust(max_len, "0")
     frac2 = frac2.ljust(max_len, "0")
-
-    # Combine the integer and fractional parts into two binary strings
     binary_int = ""
     binary_frac = ""
     carry = 0
@@ -351,12 +333,8 @@ def add_floats(num1, num2):
             carry = 1
             sum_ -= 2
         binary_frac = str(sum_) + binary_frac
-
-    # If there is a carry left over after adding the fractional parts, add it to the integer part
     if carry > 0:
         binary_int = bin(int(binary_int, 2) + 1)[2:]
-
-    # Combine the sign, integer, and fractional parts into the final binary string
     binary_sum = sign1 + binary_int + "." + binary_frac
 
     return binary_sum
@@ -364,7 +342,7 @@ def add_floats(num1, num2):
 
 # print("enter floating point number")
 # num=float(input())
-# binary_string = float_to_binary(num)
+# binary_string = converting_float_to_binary(num)
 # print(f"The binary representation of {num} is: {binary_string}")
 
 print("enter 1st floating point number")
