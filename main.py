@@ -1,5 +1,48 @@
-import math
 import re
+import struct
+import math
+
+def floating_point_new(number):
+    # proverka na osobie sluchai
+    if number == 0:
+        return '00000000000000000000000000000000'
+    elif number == float('inf'):
+        return '01111111100000000000000000000000'
+    elif number == float('-inf'):
+        return '11111111100000000000000000000000'
+    elif math.isnan(number):
+        return '01111111110000000000000000000000'
+
+    # znak
+    if number < 0:
+        sign = '1'
+        number = abs(number)
+    else:
+        sign = '0'
+
+    # float_to_2
+    number_int = struct.unpack('!I', struct.pack('!f', number))[0]
+    number_bin = bin(number_int)[2:].zfill(32)
+
+    # iee754
+    exponent = number_bin[1:9]
+    mantissa = number_bin[9:]
+    exponent_dec = int(exponent, 2) - 127
+    mantissa_dec = sum(int(mantissa[i]) * 2 ** (-(i + 1)) for i in range(len(mantissa)))
+    value = (-1) ** int(sign) * (1 + mantissa_dec) * 2 ** exponent_dec
+
+    return number_bin
+
+number1 = float(input("enter 1st floating point number\n"))
+number2 = float(input("enter 2nd floating point number\n"))
+
+bin1 = floating_point_new(number1)
+bin2 = floating_point_new(number2)
+bin_sum = floating_point_new(number1 + number2)
+
+print(f"The IEE754 binary representation of {number1} is: {bin1}")
+print(f"The IEE754 binary representation of {number2} is: {bin2}")
+print(f"The IEE754 binary sum of {number1} and {number2} is: {bin_sum}")
 
 def conv(number):
     direct = ""
@@ -273,71 +316,119 @@ def sum_plav(number1,por1,number2,por2):
             final=zn1+'.'+por1+'.'+sub(mant1,mant2)
         return final
 
-def converting_float_to_binary(num):
-    sign = 1
-    if num < 0:
-        sign = -1
-        num = -num
-    integer_part = int(num)
-    fractional_part = num - integer_part
-    integer_binary = ""
-    while integer_part > 0:
-        integer_binary = str(integer_part % 2) + integer_binary
-        integer_part //= 2
-    fractional_binary = ""
-    while fractional_part > 0:
-        if len(fractional_binary) >= 32:
-            break
-        fractional_part *= 2
-        if fractional_part >= 1:
-            fractional_binary += "1"
-            fractional_part -= 1
-        else:
-            fractional_binary += "0"
-    binary_string = ""
-    if sign == -1:
-        binary_string += "1"
-    else:
-        binary_string += "0"
-    binary_string += integer_binary + "." + fractional_binary
-    return binary_string
-def add_floats(num1, num2):
-    binary1 = converting_float_to_binary(num1)
-    binary2 = converting_float_to_binary(num2)
-    sign1, int1, frac1 = binary1[0], binary1[2:binary1.index(".")], binary1[binary1.index(".") + 1:]
-    sign2, int2, frac2 = binary2[0], binary2[2:binary2.index(".")], binary2[binary2.index(".") + 1:]
-    max_len = max(len(int1), len(int2))
-    int1 = int1.rjust(max_len, "0")
-    int2 = int2.rjust(max_len, "0")
-    max_len = max(len(frac1), len(frac2))
-    frac1 = frac1.ljust(max_len, "0")
-    frac2 = frac2.ljust(max_len, "0")
-    binary_int = ""
-    binary_frac = ""
-    carry = 0
-    for i in range(max_len - 1, -1, -1):
-        bit1 = int(int1[i]) if i < len(int1) else 0
-        bit2 = int(int2[i]) if i < len(int2) else 0
-        sum_ = bit1 + bit2 + carry
-        carry = 0
-        if sum_ >= 2:
-            carry = 1
-            sum_ -= 2
-        binary_int = str(sum_) + binary_int
-
-        bit1 = int(frac1[i]) if i < len(frac1) else 0
-        bit2 = int(frac2[i]) if i < len(frac2) else 0
-        sum_ = bit1 + bit2 + carry
-        carry = 0
-        if sum_ >= 2:
-            carry = 1
-            sum_ -= 2
-        binary_frac = str(sum_) + binary_frac
-    if carry > 0:
-        binary_int = bin(int(binary_int, 2) + 1)[2:]
-    binary_sum = sign1 + binary_int + "." + binary_frac
-
-    return binary_sum
+# def add_floats(a, b):
+#     # extract sign, exponent, and mantissa bits from a
+#     a_sign = 0 if a >= 0 else 1
+#     a_bits = abs(a).as_integer_ratio()
+#     a_int = a_bits[0]
+#     a_exp = 0
+#     while a_int > 1:
+#         a_int >>= 1
+#         a_exp += 1
+#     a_exp_bits = a_exp + 127
+#     a_mantissa_bits = bin(a_bits[0] - (1 << a_exp) | (1 << 23))[3:]
+#
+#     # extract sign, exponent, and mantissa bits from b
+#     b_sign = 0 if b >= 0 else 1
+#     b_bits = abs(b).as_integer_ratio()
+#     b_int = b_bits[0]
+#     b_exp = 0
+#     while b_int > 1:
+#         b_int >>= 1
+#         b_exp += 1
+#     b_exp_bits = b_exp + 127
+#     b_mantissa_bits = bin(b_bits[0] - (1 << b_exp) | (1 << 23))[3:]
+#
+#     # align exponents
+#     if a_exp < b_exp:
+#         a_exp_bits, b_exp_bits = b_exp_bits, a_exp_bits
+#         a_mantissa_bits, b_mantissa_bits = b_mantissa_bits, a_mantissa_bits
+#     while len(b_mantissa_bits) < len(a_mantissa_bits):
+#         b_mantissa_bits += '0'
+#     while len(a_mantissa_bits) < len(b_mantissa_bits):
+#         a_mantissa_bits += '0'
+#
+#     # add mantissas
+#     carry = 0
+#     sum_mantissa_bits = ''
+#     for i in range(len(a_mantissa_bits) - 1, -1, -1):
+#         a_bit = int(a_mantissa_bits[i])
+#         b_bit = int(b_mantissa_bits[i])
+#         sum_bit = a_bit + b_bit + carry
+#         if sum_bit >= 2:
+#             carry = 1
+#             sum_bit -= 2
+#         else:
+#             carry = 0
+#         sum_mantissa_bits = str(sum_bit) + sum_mantissa_bits
+#
+#     # handle carry-out
+#     if carry == 1:
+#         a_exp_bits += 1
+#         sum_mantissa_bits = '1' + sum_mantissa_bits[:-1]
+#
+#     # combine bits for sum
+#     sum_sign = a_sign if a_exp_bits > b_exp_bits else b_sign
+#     sum_exp_bits = a_exp_bits if a_exp_bits > b_exp_bits else b_exp_bits
+#     sum_mantissa_bits = sum_mantissa_bits[:23]
+#     sum_bits = (sum_sign << 31) | (sum_exp_bits << 23) | int(sum_mantissa_bits, 2)
+#
+#     # convert sum bits to float
+#     sum_float = struct.unpack('!f', struct.pack('!I', sum_bits))[0]
+#
+#     return sum_float
+# import struct
+# import math
+#
+# def floating_point_new(number):
+#     # Check for special cases
+#     if number == 0:
+#         return '00000000000000000000000000000000'
+#     elif number == float('inf'):
+#         return '01111111100000000000000000000000'
+#     elif number == float('-inf'):
+#         return '11111111100000000000000000000000'
+#     elif math.isnan(number):
+#         return '01111111110000000000000000000000'
+#
+#     # Extract the sign bit
+#     if number < 0:
+#         sign = '1'
+#         number = abs(number)
+#     else:
+#         sign = '0'
+#
+#     # Convert the float to binary
+#     number_int = struct.unpack('!I', struct.pack('!f', number))[0]
+#     number_bin = bin(number_int)[2:].zfill(32)
+#
+#     # Separate the binary representation into sign, exponent, and mantissa bits
+#     exponent = number_bin[1:9]
+#     mantissa = number_bin[9:]
+#
+#     # Convert the exponent from bias notation to decimal
+#     exponent_dec = int(exponent, 2) - 127
+#
+#     # Convert the mantissa to decimal
+#     mantissa_dec = sum(int(mantissa[i]) * 2 ** (-(i + 1)) for i in range(len(mantissa)))
+#
+#     # Calculate the value of the float
+#     value = (-1) ** int(sign) * (1 + mantissa_dec) * 2 ** exponent_dec
+#
+#     return number_bin
+#
+#
+# # Test the function with 1.5 and 2.25
+# number1 = float(input("enter 1st floating point number\n"))
+# number2 = float(input("enter 2nd floating point number\n"))
+#
+# bin1 = floating_point_new(number1)
+# bin2 = floating_point_new(number2)
+# bin_sum = floating_point_new(number1 + number2)
+#
+# print(f"The binary representation of {number1} is: {bin1}")
+# print(f"The binary representation of {number2} is: {bin2}")
+# print(f"The binary sum of {number1} and {number2} is: {bin_sum}")
 
 
 # print("enter floating point number")
@@ -345,13 +436,12 @@ def add_floats(num1, num2):
 # binary_string = converting_float_to_binary(num)
 # print(f"The binary representation of {num} is: {binary_string}")
 
-print("enter 1st floating point number")
-num1 = float(input())
-print("enter 2nd floating point number")
-num2 = float(input())
-binary_sum = add_floats(num1, num2)
-print(f"The binary sum of {num1} and {num2} is: {binary_sum}")
-
+# print("enter 1st floating point number")
+# a = float(input())
+# print("enter 2nd floating point number")
+# b = float(input())
+# binary_sum = add_floats(a, b)
+# print(f"The binary sum of {a} and {b} is: {binary_sum}")
 
 print("number 4 ",conv(4))
 print("number 19 ",conv(19))
